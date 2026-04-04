@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: fct_customer_summary
+    description: Customer summary fact table with lifetime value and order metrics
+    columns:
+      - name: customer_id
+        description: Unique customer identifier
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_orders
+    description: Order fact table with customer and location dimensions
+    columns:
+      - name: order_id
+        description: Unique order identifier
+        tests:
+          - unique
+          - not_null

@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: stg_customers
+    description: Staged customer data with basic transformations
+    columns:
+      - name: customer_id
+        description: Unique customer identifier
+        tests:
+          - unique
+          - not_null
+      - name: customer_name
+        description: Customer full name
+        tests:
+          - not_null
+      - name: email
+        description: Customer email address
+        tests:
+          - unique
+
+  - name: stg_orders
+    description: Staged order data with basic transformations
+    columns:
+      - name: order_id
+        description: Unique order identifier
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Foreign key to customers
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+      - name: order_amount
+        description: Order amount before tax
+        tests:
+          - not_null
+      - name: total_amount
+        description: Total order amount including tax
+        tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: numeric
