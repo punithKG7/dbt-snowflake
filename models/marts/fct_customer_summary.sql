@@ -19,6 +19,7 @@ select
 from {{ ref('stg_customers') }} c
 left join {{ ref('stg_orders') }} o
     on c.customer_id = o.customer_id
+    and o.order_status = 'completed'
 group by
     c.customer_id,
     c.customer_name,
