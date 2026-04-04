@@ -1,0 +1,16 @@
+# Example dbt model - Staging layer
+version: 2
+
+models:
+  - name: stg_customers
+    description: Staged customer data with basic transformations
+    columns:
+      - name: customer_id
+        description: Unique customer identifier
+        tests:
+          - unique
+          - not_null
+      - name: customer_name
+        description: Customer full name
+      - name: email
+        description: Customer email address

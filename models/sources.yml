@@ -1,0 +1,32 @@
+# Example sources.yml for reference
+version: 2
+
+sources:
+  - name: raw_data
+    description: Raw source data from operational systems
+    database: RAW
+    schema: PUBLIC
+    tables:
+      - name: customers
+        description: Customer master data
+        columns:
+          - name: customer_id
+            description: Unique customer identifier
+            tests:
+              - unique
+              - not_null
+
+      - name: orders
+        description: Customer orders
+        columns:
+          - name: order_id
+            description: Unique order identifier
+            tests:
+              - unique
+              - not_null
+          - name: customer_id
+            description: Foreign key to customers
+            tests:
+              - relationships:
+                  to: source('raw_data', 'customers')
+                  field: customer_id
