@@ -24,8 +24,40 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Check Snowflake secrets
+        id: snowflake-secrets
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+          SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+        run: |
+          missing=0
+          for var in SNOWFLAKE_ACCOUNT SNOWFLAKE_USER SNOWFLAKE_PASSWORD SNOWFLAKE_ROLE SNOWFLAKE_DATABASE SNOWFLAKE_WAREHOUSE; do
+            if [ -z "${!var}" ]; then
+              missing=1
+              echo "::warning::Missing secret: $var"
+            fi
+          done
+
+          if [ "$missing" -eq 0 ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Snowflake secrets are unavailable. Connection-dependent dbt steps will be skipped."
+          fi
       
       - name: Create profiles.yml
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+          SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
         run: |
           mkdir -p ~/.dbt
           cat > ~/.dbt/profiles.yml << EOF
@@ -34,18 +66,19 @@ jobs:
             outputs:
               ci:
                 type: snowflake
-                account: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-                user: ${{ secrets.SNOWFLAKE_USER }}
-                password: ${{ secrets.SNOWFLAKE_PASSWORD }}
-                role: ${{ secrets.SNOWFLAKE_ROLE }}
-                database: ${{ secrets.SNOWFLAKE_DATABASE }}
+                account: ${SNOWFLAKE_ACCOUNT:-placeholder_account}
+                user: ${SNOWFLAKE_USER:-placeholder_user}
+                password: ${SNOWFLAKE_PASSWORD:-placeholder_password}
+                role: ${SNOWFLAKE_ROLE:-placeholder_role}
+                database: ${SNOWFLAKE_DATABASE:-placeholder_database}
                 schema: CI_DBT
-                warehouse: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+                warehouse: ${SNOWFLAKE_WAREHOUSE:-placeholder_warehouse}
                 threads: 4
                 client_session_keep_alive: False
           EOF
       
       - name: dbt debug
+        if: steps.snowflake-secrets.outputs.available == 'true'
         run: dbt debug
       
       - name: dbt parse
@@ -55,7 +88,9 @@ jobs:
         run: dbt deps
       
       - name: dbt run
+        if: steps.snowflake-secrets.outputs.available == 'true'
         run: dbt run
       
       - name: dbt test
+        if: steps.snowflake-secrets.outputs.available == 'true'
         run: dbt test
