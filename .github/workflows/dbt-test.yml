@@ -81,11 +81,11 @@ jobs:
         if: steps.snowflake-secrets.outputs.available == 'true'
         run: dbt debug
       
-      - name: dbt parse
-        run: dbt parse
-      
       - name: dbt deps
         run: dbt deps
+
+      - name: dbt parse
+        run: dbt parse
       
       - name: dbt run
         if: steps.snowflake-secrets.outputs.available == 'true'
