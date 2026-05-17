@@ -67,3 +67,4 @@ Thumbs.db
 
 # Analytics (optional)
 .analytics.yml
+dbt_internal_packages/
